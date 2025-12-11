@@ -1,0 +1,22 @@
+{
+  "name": "north-pole-api-expressjs",
+  "version": "1.0.0",
+  "description": "Santa's Naughty and Nice List JSON REST API",
+  "license": "ISC",
+  "author": "Gage O'Laughlin",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "node --loader=ts-node/esm --env-file=.env --watch src/index.ts",
+    "build": "npx tsc",
+    "start": "node --env-file=.env dist/index.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
