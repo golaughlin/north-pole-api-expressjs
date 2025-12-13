@@ -7,9 +7,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "node --loader=ts-node/esm --env-file=.env --watch src/index.ts",
-    "build": "npx tsc",
-    "start": "node --env-file=.env dist/index.js"
+    "dev": "node .src/index.ts"
   },
   "dependencies": {
     "express": "^5.2.1"
