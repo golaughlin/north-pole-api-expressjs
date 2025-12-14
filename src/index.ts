@@ -1,4 +1,9 @@
+import "dotenv/config";
 import express from "express";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { eq } from "drizzle-orm";
+import { childrenTable } from "./db/schema.ts";
 
 // Mock Data for testing
 const children = [
@@ -28,6 +33,9 @@ const children = [
   },
 ]
 
+// Connect to Neon PostgreSQL database via Neon
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle({ client: sql });
 
 // Create Express.js App
 const app = express();
@@ -41,14 +49,18 @@ app.get('/', (req, res) => {
 });
 
 // Get all the children from Santa's Naughty and Nice List.
-app.get('/children', (req, res) => {
-  res.json(children);
+app.get('/children', async (req, res) => {
+  const sqlChildren = await db.select().from(childrenTable);
+  res.json(sqlChildren);
 });
 
 // Get info on a single child fron Santa's Naughty and Nice List.
-app.get('/children/:id', (req, res) => {
+app.get('/children/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const child = children.find((c) => c.id === id);
+  const [child] = await db
+    .select()
+    .from(childrenTable)
+    .where(eq(childrenTable.id, id));
 
   if (!child) {
     res.status(404).json({ error: "Child not found." });
