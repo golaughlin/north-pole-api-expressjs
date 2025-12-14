@@ -5,34 +5,6 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 import { childrenTable } from "./db/schema.ts";
 
-// Mock Data for testing
-const children = [
-  {
-    id: 1,
-    firstName: "Smitty",
-    lastName: "Jensen",
-    dateOfBirth: "2017-06-09",
-    hometown: "Townville",
-    isNice: true,
-  },
-  {
-    id: 2,
-    firstName: "Page",
-    lastName: "Tuner",
-    dateOfBirth: "2021-04-20",
-    hometown: "Metropolis",
-    isNice: true,
-  },
-  {
-    id: 3,
-    firstName: "Kevin",
-    lastName: "Monno",
-    dateOfBirth: "2019-09-09",
-    hometown: "New London",
-    isNice: false,
-  },
-]
-
 // Connect to Neon PostgreSQL database via Neon
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle({ client: sql });
@@ -70,7 +42,7 @@ app.get('/children/:id', async (req, res) => {
 });
 
 // Add a new child to Santa's Naughty and Nice List.
-app.post('/children', (req, res) => {
+app.post('/children', async (req, res) => {
   const { firstName, lastName, dateOfBirth, hometown, isNice } = req.body;
 
   if (!firstName) {
@@ -89,48 +61,60 @@ app.post('/children', (req, res) => {
     return res.status(400).json({ error: "Is Nice? is required" });
   }
 
-  const newChild = {
-    id: children.length + 1,
-    firstName,
-    lastName,
-    dateOfBirth,
-    hometown,
-    isNice
+  const newChild: typeof childrenTable.$inferInsert = {
+    firstName: firstName,
+    lastName: lastName,
+    dateOfBirth: dateOfBirth,
+    hometown: hometown,
+    isNice: isNice,
   };
 
-  children.push(newChild);
-  res.status(201).json(newChild);
+  try {
+    await db.insert(childrenTable).values(newChild);
+    console.log("Added a new child to Santa's List");
+    res.status(201).json(newChild);
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: "Could not add the new child to the list" });
+  }
 });
 
 // Update info on a single child from Santa's Naughty and Nice List.
-app.put('/children/:id', (req, res) => {
+app.put('/children/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const child = children.find((c) => c.id === id);
 
-  if (!child) {
-    return res.status(404).json({ error: "Child not found" });
+  try {
+    await db
+      .update(childrenTable)
+      .set({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        dateOfBirth: req.body.dateOfBirth,
+        hometown: req.body.hometown,
+        isNice: req.body.isNice,
+      })
+      .where(eq(childrenTable.id, id));
+
+    console.log(`Updated child #${id} on Santa's List`);
+    return res.json({ message: `Updated child #${id} on Santa's List`});
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: "Could not update child" });
   }
-
-  child.firstName = req.body.firstName;
-  child.lastName = req.body.lastName;
-  child.dateOfBirth = req.body.dateOfBirth;
-  child.hometown = req.body.hometown;
-  child.isNice = req.body.isNice;
-
-  res.json(child);
 });
 
 // Remove a single child from Santa's Naughty and Nice List.
-app.delete('/children/:id', (req, res) => {
+app.delete('/children/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const childIndex = children.findIndex((c) => c.id === id);
 
-  if (childIndex === -1) {
-    return res.status(404).json({ error: "Child not found" });
+  try {
+    await db.delete(childrenTable).where(eq(childrenTable.id, id));
+    console.log(`Child #${id} has been removed from Santa's List`);
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: "Could not remove child" });
   }
-
-  children.splice(childIndex, 1);
-  res.status(204).send();
 });
 
 
