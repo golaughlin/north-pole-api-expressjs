@@ -1,5 +1,4 @@
-import { pgTable, serial, varchar, date, boolean, timestamp } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
+import { pgTable, serial, varchar, date, boolean, timestamp } from "drizzle-orm/pg-core";
 
 export const childrenTable = pgTable("children", {
 	id: serial().primaryKey().notNull(),
